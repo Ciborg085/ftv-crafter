@@ -68,6 +68,12 @@ function getRotationStatus(releasedAt) {
 }
 
 function displayCards(cards) {
+  cardsContainer.innerHTML = ''; // Clear existing cards before displaying new ones
+  if (cards.length === 0) {
+    cardsContainer.innerHTML = '<p class="no-cards">No cards found.</p>';
+    return;
+  }
+
   cards.forEach(card => {
     const cardElement = document.createElement('div');
     cardElement.classList.add('card');
@@ -123,40 +129,49 @@ async function fetchCards() {
   const rotationDateFilter = rotationDateInput.value;
 
   // Base query for standard legal cards
-  let url = `https://api.scryfall.com/cards/search?q=game:paper+legal:standard&order=${sortOrder}&page=${currentPage}&limit=${pageSize}`;
+  let query = 'game:paper legal:standard';
 
   // Add filters
   if (searchTerm) {
-    url += `+${encodeURIComponent(searchTerm)}`;
+    query += ` name:${searchTerm}`; // Use name: for partial matches
   }
   if (colorFilter) {
-    url += `+color:${colorFilter}`;
+    query += ` color=${colorFilter}`;
   }
-  if (cmcFilter) {
-    url += `+cmc<=${cmcFilter}`;
+  if (cmcFilter && cmcFilter > 0) { // Only apply cmc filter if cmcFilter > 0
+    query += ` cmc=${cmcFilter}`;
   }
   if (setFilter) {
-    url += `+set:${setFilter}`;
+    query += ` set:${setFilter}`;
   }
   if (releaseDateFilter) {
-    url += `+released>=${releaseDateFilter}`;
+    query += ` released>=${releaseDateFilter}`;
   }
   if (rotationDateFilter) {
-    url += `+released<=${rotationDateFilter}`;
+    query += ` released<=${rotationDateFilter}`;
   }
+
+  // Construct the full URL
+  const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&order=${sortOrder}&page=${currentPage}&limit=${pageSize}`;
+
+  console.log('API URL:', url); // Log the constructed API URL for debugging
 
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error('Failed to fetch cards');
+      throw new Error(`Failed to fetch cards: ${response.statusText}`);
     }
     const data = await response.json();
+    if (data.object === 'error') {
+      throw new Error(data.details || 'No cards found');
+    }
     console.log('API Response:', data); // Log the API response
     displayCards(data.data);
     totalPages = Math.ceil(data.total_cards / pageSize); // Calculate total pages
     updatePagination();
   } catch (error) {
     console.error('Error fetching cards:', error);
+    cardsContainer.innerHTML = `<p class="error-message">${error.message}</p>`;
   } finally {
     isLoading = false;
     loadingSpinner.style.display = 'none';
@@ -188,6 +203,12 @@ function handleScroll() {
     fetchCards();
   }
 }
+
+// Add input event listener for dynamic filtering
+searchInput.addEventListener('input', debounce(() => {
+  currentPage = 1; // Reset to the first page when filtering
+  fetchCards();
+}, 300)); // Debounce with a 300ms delay
 
 window.addEventListener('scroll', debounce(handleScroll, 200));
 
