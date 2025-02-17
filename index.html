@@ -3,14 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scryfall Card Search</title>
+  <title>Magic: The Gathering Card Browser</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Scryfall Card Search</h1>
-  <input id="search-input" type="text" placeholder="Search for cards...">
-  <button id="search-button">Search</button>
-  <div id="card-list"></div>
+  <h1>Magic: The Gathering Card Browser</h1>
+  <div>
+    <label for="search">Search:</label>
+    <input type="text" id="search" placeholder="Search cards...">
+    <label for="color">Color:</label>
+    <select id="color">
+      <option value="">All</option>
+      <option value="W">White</option>
+      <option value="U">Blue</option>
+      <option value="B">Black</option>
+      <option value="R">Red</option>
+      <option value="G">Green</option>
+    </select>
+    <label for="cmc">CMC:</label>
+    <input type="number" id="cmc" min="0" max="20" value="0">
+    <label for="set">Set:</label>
+    <select id="set">
+      <option value="dom">Dominaria Remastered</option>
+    </select>
+    <button id="filter">Filter</button>
+  </div>
+  <div id="cards"></div>
+
   <script src="script.js"></script>
 </body>
 </html>
