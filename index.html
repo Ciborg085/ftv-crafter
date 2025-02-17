@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Magic: The Gathering Card Browser</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>From the Vault Card Browser</title>
+  <link rel="stylesheet" href="styles/styles.css">
 </head>
 <body>
-  <h1>From the Vault Card Database</h1>
-  <div>
+  <div class="header">
+    <img src="media/vault01logo.png" alt="From the Vault Logo" class="logo">
+    <h1>From the Vault Card Browser</h1>
+  </div>
+  <div class="filters">
     <label for="search">Search:</label>
     <input type="text" id="search" placeholder="Search cards...">
     <label for="color">Color:</label>
@@ -24,12 +27,32 @@
     <input type="number" id="cmc" min="0" max="20" value="0">
     <label for="set">Set:</label>
     <select id="set">
-      <option value="dom">Dominaria United</option>
+      <option value="">All Standard Legal Sets</option>
+    </select>
+    <label for="releaseDate">Release Date:</label>
+    <input type="date" id="releaseDate">
+    <label for="rotationDate">Rotation Date:</label>
+    <input type="date" id="rotationDate">
+    <label for="sort">Sort by:</label>
+    <select id="sort">
+      <option value="set_number">Set Number (Ascending)</option>
+      <option value="set_number_desc">Set Number (Descending)</option>
     </select>
     <button id="filter">Filter</button>
+    <button id="reset">Reset Filters</button>
   </div>
-  <div id="cards"></div>
+  <div id="loading" class="loading-spinner" style="display: none;">
+    Loading...
+  </div>
+  <div id="cards-container">
+    <div id="cards"></div>
+  </div>
+  <div class="pagination">
+    <button id="prevPage" disabled>Previous</button>
+    <span id="pageInfo">Page 1 of 1</span>
+    <button id="nextPage" disabled>Next</button>
+  </div>
 
-  <script src="script.js"></script>
+  <script src="js/script.js"></script>
 </body>
 </html>
