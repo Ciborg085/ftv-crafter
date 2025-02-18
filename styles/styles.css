@@ -140,6 +140,11 @@ h1 {
   background-color: #0056b3;
 }
 
+.card-footer {
+    margin-top: auto;
+    text-align: center;
+}
+
 .pagination {
   display: flex;
   justify-content: center;
