@@ -96,10 +96,15 @@ function displayCards(cards) {
         <p class="set">Latest print: ${card.set_name}</p>
         <p class="rotation-status" style="color: ${rotationStatus.color}; background-color: black; padding: 2px 5px; border-radius: 3px;">${rotationStatus.text}</p>
       </div>
-      <div class="card-buttons">
-        <a href="${card.scryfall_uri}" target="_blank">View on Scryfall</a>
-        <a href="https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}" target="_blank">View on CardMarket</a>
-      </div>
+        <div class="card-footer">
+          <div class="card-buttons">
+            <a href="${card.scryfall_uri}" target="_blank">View on Scryfall</a>
+            <a href="https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}" target="_blank">View on CardMarket</a>
+          </div>
+          <div class="card-prices">
+              <p>Price: ${card.prices.eur ? card.prices.eur+'€' : card.prices.usd ? card.prices.usd+'$' : ''}</p>
+          </div>
+        </div>
     `;
     cardsContainer.appendChild(cardElement);
   });
