@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>From the Vault Card Browser</title>
+  <title>From The Vault Deck Builder</title>
+  <link rel="icon" href="media/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="styles/styles.css">
+  <link rel="stylesheet" href="styles/card-browser.css">
+  <link rel="stylesheet" href="styles/deck-builder.css">
 </head>
 <body>
   <div class="header">
     <img src="media/vault01logo.png" alt="From the Vault Logo" class="logo">
-    <h1>From the Vault Card Browser</h1>
+    <h1>From The Vault Deck Builder</h1>
   </div>
 
   <!-- Layout Buttons -->
@@ -19,61 +22,61 @@
     <button id="showSideBySide">Side by Side</button>
   </div>
 
-  <div class="filters">
-    <label for="search">Search:</label>
-    <input type="text" id="search" placeholder="Search cards...">
-
-    <!-- Color and Type Filters Side by Side -->
-    <div class="filter-group">
-      <div class="color-filter">
-        <span>Color:</span>
-        <div class="color-grid">
-          <label><input type="checkbox" name="color" value="W"> White</label>
-          <label><input type="checkbox" name="color" value="U"> Blue</label>
-          <label><input type="checkbox" name="color" value="B"> Black</label>
-          <label><input type="checkbox" name="color" value="R"> Red</label>
-          <label><input type="checkbox" name="color" value="G"> Green</label>
-          <label><input type="checkbox" name="color" value="C"> Colorless</label>
-        </div>
-      </div>
-
-      <div class="type-filter">
-        <span>Type:</span>
-        <div class="type-grid">
-          <label><input type="checkbox" name="type" value="Creature"> Creature</label>
-          <label><input type="checkbox" name="type" value="Instant"> Instant</label>
-          <label><input type="checkbox" name="type" value="Sorcery"> Sorcery</label>
-          <label><input type="checkbox" name="type" value="Planeswalker"> Planeswalker</label>
-          <label><input type="checkbox" name="type" value="Enchantment"> Enchantment</label>
-          <label><input type="checkbox" name="type" value="Land"> Land</label>
-          <label><input type="checkbox" name="type" value="Artifact"> Artifact</label>
-          <label><input type="checkbox" name="type" value="Battle"> Battle</label>
-        </div>
-      </div>
-    </div>
-
-    <label for="cmc">CMC:</label>
-    <input type="number" id="cmc" min="0" max="20" value="0">
-
-    <label for="set">Set:</label>
-    <select id="set">
-      <option value="">All Standard Legal Sets</option>
-    </select>
-
-    <label for="sort">Sort by:</label>
-    <select id="sort">
-      <option value="set_number">Set Number (Ascending)</option>
-      <option value="set_number_desc">Set Number (Descending)</option>
-    </select>
-
-    <button id="filter">Filter</button>
-    <button id="reset">Reset Filters</button>
-  </div>
-
   <!-- Main Content Container -->
   <div class="main-content">
     <!-- Card Browser -->
     <div id="cards-container">
+      <h2>Card Browser</h2>
+      <div class="filters">
+        <label for="search">Search:</label>
+        <input type="text" id="search" placeholder="Search cards...">
+
+        <div class="filter-group">
+          <div class="color-filter">
+            <span>Color:</span>
+            <div class="color-grid">
+              <label><input type="checkbox" name="color" value="W"> White</label>
+              <label><input type="checkbox" name="color" value="U"> Blue</label>
+              <label><input type="checkbox" name="color" value="B"> Black</label>
+              <label><input type="checkbox" name="color" value="R"> Red</label>
+              <label><input type="checkbox" name="color" value="G"> Green</label>
+              <label><input type="checkbox" name="color" value="C"> Colorless</label>
+            </div>
+          </div>
+
+          <div class="type-filter">
+            <span>Type:</span>
+            <div class="type-grid">
+              <label><input type="checkbox" name="type" value="Creature"> Creature</label>
+              <label><input type="checkbox" name="type" value="Instant"> Instant</label>
+              <label><input type="checkbox" name="type" value="Sorcery"> Sorcery</label>
+              <label><input type="checkbox" name="type" value="Planeswalker"> Planeswalker</label>
+              <label><input type="checkbox" name="type" value="Enchantment"> Enchantment</label>
+              <label><input type="checkbox" name="type" value="Land"> Land</label>
+              <label><input type="checkbox" name="type" value="Artifact"> Artifact</label>
+              <label><input type="checkbox" name="type" value="Battle"> Battle</label>
+            </div>
+          </div>
+        </div>
+
+        <label for="cmc">CMC:</label>
+        <input type="number" id="cmc" min="0" max="20" value="0">
+
+        <label for="set">Set:</label>
+        <select id="set">
+          <option value="">All Standard Legal Sets</option>
+        </select>
+
+        <label for="sort">Sort by:</label>
+        <select id="sort">
+          <option value="set_number">Set Number (Ascending)</option>
+          <option value="set_number_desc">Set Number (Descending)</option>
+        </select>
+
+        <button id="filter">Filter</button>
+        <button id="reset">Reset Filters</button>
+      </div>
+
       <div id="cards"></div>
       <div class="pagination">
         <button id="prevPage" disabled>Previous</button>
@@ -83,7 +86,13 @@
     </div>
 
     <!-- Deck Builder -->
-    <div id="deckList"></div>
+    <div id="deckList">
+      <h2>Deck Builder</h2>
+      <button id="filterByCommander">Filter by Commander Colors</button>
+      <button id="importDeck">Import Deck</button>
+      <div id="deck-content"></div>
+      <button id="exportDeck">Export Deck</button>
+    </div>
   </div>
 
   <div id="loading" class="loading-spinner" style="display: none;">
@@ -91,7 +100,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="js/script.js"></script>
+  <script src="js/cardBrowser.js"></script>
+  <script src="js/deckBuilder.js"></script>
   <script src="js/layoutManager.js"></script>
 </body>
 </html>

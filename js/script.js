@@ -1,5 +1,3 @@
-// script.js
-
 const cardsContainer = document.getElementById('cards');
 const searchInput = document.getElementById('search');
 const colorCheckboxes = document.querySelectorAll('input[name="color"]');
@@ -13,13 +11,15 @@ const loadingSpinner = document.getElementById('loading');
 const prevPageButton = document.getElementById('prevPage');
 const nextPageButton = document.getElementById('nextPage');
 const pageInfo = document.getElementById('pageInfo');
-const deckModule = initializeDeckBuilder(); // Initialize and store the deck module
+const filterByCommanderButton = document.getElementById('filterByCommander');
+const deckModule = initializeDeckBuilder(filterByCommanderButton); // Pass the button as an argument
 
 let currentPage = 1;
 const pageSize = 175; // Increased page size
 let totalPages = 1;
 let isLoading = false;
 let lastRequestTime = 0;
+let commanderColors = []; // Track the commander's color identity
 
 // Updated Standard legal sets
 const standardLegalSets = [
@@ -166,6 +166,11 @@ async function fetchCards() {
     query += ` (${selectedTypes.map(type => `type:${type}`).join(' OR ')})`;
   }
 
+  // Filter by commander colors if enabled
+  if (filterByCommanderButton.classList.contains('active') && commanderColors.length > 0) {
+    query += ` (${commanderColors.map(color => `color=${color}`).join(' OR ')})`;
+  }
+
   // Construct the full URL
   const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&order=${sortOrder}&page=${currentPage}&limit=${pageSize}`;
 
@@ -263,11 +268,46 @@ nextPageButton.addEventListener('click', () => {
 
 fetchCards();
 
-function initializeDeckBuilder() {
+// ... (previous code remains the same until the end of initializeDeckBuilder)
+
+function initializeDeckBuilder(filterByCommanderButton) {
   let deck = [];
   let commander = null; // Track the commander
-  const deckList = document.getElementById('deckList');
-  deckList.innerHTML = '<h2>Your Deck</h2>';
+  const deckList = document.getElementById('deck-content');
+  const exportDeckButton = document.getElementById('exportDeck');
+  const importDeckButton = document.createElement('button'); // Add import button
+  importDeckButton.textContent = 'Import Deck';
+  importDeckButton.classList.add('import-button');
+  deckList.parentNode.insertBefore(importDeckButton, deckList); // Insert import button before deck list
+
+  // Load deck from localStorage if it exists
+  function loadDeckFromStorage() {
+    const savedDeck = localStorage.getItem('deck');
+    if (savedDeck) {
+      deck = JSON.parse(savedDeck);
+      commander = deck.find(card => card.isCommander) || null;
+      if (commander) {
+        commanderColors = commander.color_identity || [];
+        filterByCommanderButton.classList.add('active');
+      }
+      renderDeck();
+    }
+  }
+
+  // Save deck to localStorage
+  function saveDeckToStorage() {
+    localStorage.setItem('deck', JSON.stringify(deck));
+  }
+
+  // Function to calculate the average deck price
+  function calculateAverageDeckPrice() {
+    let totalPrice = 0;
+    deck.forEach(card => {
+      const price = card.prices.eur || card.prices.usd || 0;
+      totalPrice += parseFloat(price);
+    });
+    return totalPrice.toFixed(2);
+  }
 
   // Function to sort cards by type
   function sortDeckByType() {
@@ -281,12 +321,12 @@ function initializeDeckBuilder() {
 
   // Function to render the deck
   function renderDeck() {
-    deckList.innerHTML = '<h2>Your Deck</h2>';
+    deckList.innerHTML = '';
     if (commander) {
       const commanderSection = document.createElement('div');
       commanderSection.classList.add('deck-section');
       commanderSection.innerHTML = `<h3>Commander</h3>`;
-      const commanderCard = createDeckCardElement(commander);
+      const commanderCard = createDeckCardElement(commander, true);
       commanderSection.appendChild(commanderCard);
       deckList.appendChild(commanderSection);
     }
@@ -308,26 +348,30 @@ function initializeDeckBuilder() {
       section.classList.add('deck-section');
       section.innerHTML = `<h3>${type}s</h3>`;
       groupedCards[type].forEach(card => {
-        const cardElement = createDeckCardElement(card);
+        const cardElement = createDeckCardElement(card, false);
         section.appendChild(cardElement);
       });
       deckList.appendChild(section);
     });
 
-    // Add export button
-    const exportButton = document.createElement('button');
-    exportButton.textContent = 'Export Deck';
-    exportButton.classList.add('export-button');
-    exportButton.addEventListener('click', exportDeck);
-    deckList.appendChild(exportButton);
+    // Display the average deck price
+    const averagePrice = calculateAverageDeckPrice();
+    const priceDisplay = document.createElement('div');
+    priceDisplay.classList.add('deck-price');
+    priceDisplay.innerHTML = `<p>Average Total Deck Price: ${averagePrice}€</p>`;
+    deckList.appendChild(priceDisplay);
+
+    // Save the deck to localStorage
+    saveDeckToStorage();
   }
 
   // Function to create a card element for the deck list
-  function createDeckCardElement(card) {
+  function createDeckCardElement(card, isCommander) {
     const cardElement = document.createElement('div');
     cardElement.classList.add('deck-card');
+    const count = deck.filter(c => c.id === card.id).length;
     cardElement.innerHTML = `
-      <p>${card.name} <span class="card-price">${card.prices.eur ? card.prices.eur + '€' : card.prices.usd ? card.prices.usd + '$' : ''}</span></p>
+      <p>${isCommander ? '' : `${count}x `}${card.name} <span class="card-price">${card.prices.eur ? card.prices.eur + '€' : card.prices.usd ? card.prices.usd + '$' : ''}</span></p>
       <button class="remove-from-deck" data-card-id="${card.id}">Remove</button>
     `;
 
@@ -348,17 +392,21 @@ function initializeDeckBuilder() {
 
   // Function to add a card to the deck
   function addToDeck(cardId, cardData) {
+    // Check if the card is a Legendary Creature and set it as the commander
+    if (cardData.type_line.includes('Legendary Creature') && !commander) {
+      commander = cardData;
+      commander.isCommander = true; // Mark the card as the commander
+      commanderColors = cardData.color_identity || []; // Set the commander's color identity
+      filterByCommanderButton.classList.add('active'); // Enable commander color filtering by default
+      fetchCards(); // Refresh the card browser with the new filter
+    }
+
     // Check if the card is already in the deck (except for basic lands)
     const isBasicLand = cardData.type_line.includes('Basic Land');
     const isDuplicate = deck.some(card => card.id === cardId && !isBasicLand);
     if (isDuplicate) {
       alert('You can only add one copy of each card (except basic lands).');
       return;
-    }
-
-    // Check if the card is a Legendary Creature and set it as the commander
-    if (cardData.type_line.includes('Legendary Creature') && !commander) {
-      commander = cardData;
     }
 
     deck.push(cardData);
@@ -372,6 +420,9 @@ function initializeDeckBuilder() {
     if (cardIndex !== -1) {
       if (deck[cardIndex] === commander) {
         commander = null; // Remove the commander
+        commanderColors = []; // Clear the commander's color identity
+        filterByCommanderButton.classList.remove('active'); // Disable commander color filtering
+        fetchCards(); // Refresh the card browser without the filter
       }
       deck.splice(cardIndex, 1);
       sortDeckByType();
@@ -403,6 +454,56 @@ function initializeDeckBuilder() {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  // Function to import a deck from a file
+  function importDeck(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const deckText = e.target.result;
+      const lines = deckText.split('\n');
+      for (const line of lines) {
+        const [count, ...nameParts] = line.trim().split(' ');
+        const cardName = nameParts.join(' ');
+        if (!cardName) continue;
+
+        try {
+          const response = await fetch(`https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cardName)}`);
+          if (!response.ok) throw new Error('Card not found');
+          const cardData = await response.json();
+          for (let i = 0; i < parseInt(count); i++) {
+            deckModule.addToDeck(cardData.id, cardData);
+          }
+        } catch (error) {
+          console.error(`Error importing card: ${cardName}`, error);
+        }
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Event listener for the export button
+  exportDeckButton.addEventListener('click', exportDeck);
+
+  // Event listener for the import button
+  importDeckButton.addEventListener('click', () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.txt';
+    fileInput.addEventListener('change', importDeck);
+    fileInput.click();
+  });
+
+  // Event listener for the commander color filter button
+  filterByCommanderButton.addEventListener('click', () => {
+    filterByCommanderButton.classList.toggle('active');
+    fetchCards(); // Refresh the card browser with the updated filter
+  });
+
+  // Load the deck from localStorage when the page loads
+  loadDeckFromStorage();
 
   // Expose the deck functions
   return {
