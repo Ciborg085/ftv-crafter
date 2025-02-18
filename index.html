@@ -11,38 +11,53 @@
     <img src="media/vault01logo.png" alt="From the Vault Logo" class="logo">
     <h1>From the Vault Card Browser</h1>
   </div>
+
+  <!-- Layout Buttons -->
+  <div class="layout-buttons">
+    <button id="showBrowserOnly">Card Browser Only</button>
+    <button id="showDeckOnly">Deck Builder Only</button>
+    <button id="showSideBySide">Side by Side</button>
+  </div>
+
   <div class="filters">
     <label for="search">Search:</label>
     <input type="text" id="search" placeholder="Search cards...">
 
-    <div class="color-filter">
-      <span>Color:</span>
-      <label><input type="checkbox" name="color" value="W"> White</label>
-      <label><input type="checkbox" name="color" value="U"> Blue</label>
-      <label><input type="checkbox" name="color" value="B"> Black</label>
-      <label><input type="checkbox" name="color" value="R"> Red</label>
-      <label><input type="checkbox" name="color" value="G"> Green</label>
-      <label><input type="checkbox" name="color" value="C"> Colorless</label>
+    <!-- Color and Type Filters Side by Side -->
+    <div class="filter-group">
+      <div class="color-filter">
+        <span>Color:</span>
+        <div class="color-grid">
+          <label><input type="checkbox" name="color" value="W"> White</label>
+          <label><input type="checkbox" name="color" value="U"> Blue</label>
+          <label><input type="checkbox" name="color" value="B"> Black</label>
+          <label><input type="checkbox" name="color" value="R"> Red</label>
+          <label><input type="checkbox" name="color" value="G"> Green</label>
+          <label><input type="checkbox" name="color" value="C"> Colorless</label>
+        </div>
+      </div>
+
+      <div class="type-filter">
+        <span>Type:</span>
+        <div class="type-grid">
+          <label><input type="checkbox" name="type" value="Creature"> Creature</label>
+          <label><input type="checkbox" name="type" value="Instant"> Instant</label>
+          <label><input type="checkbox" name="type" value="Sorcery"> Sorcery</label>
+          <label><input type="checkbox" name="type" value="Planeswalker"> Planeswalker</label>
+          <label><input type="checkbox" name="type" value="Enchantment"> Enchantment</label>
+          <label><input type="checkbox" name="type" value="Land"> Land</label>
+          <label><input type="checkbox" name="type" value="Artifact"> Artifact</label>
+          <label><input type="checkbox" name="type" value="Battle"> Battle</label>
+        </div>
+      </div>
     </div>
-    
+
     <label for="cmc">CMC:</label>
     <input type="number" id="cmc" min="0" max="20" value="0">
 
     <label for="set">Set:</label>
     <select id="set">
       <option value="">All Standard Legal Sets</option>
-    </select>
-
-    <label for="type">Type:</label>
-    <select id="type" multiple>
-      <option value="Creature">Creature</option>
-      <option value="Instant">Instant</option>
-      <option value="Sorcery">Sorcery</option>
-      <option value="Planeswalker">Planeswalker</option>
-      <option value="Enchantment">Enchantment</option>
-      <option value="Land">Land</option>
-      <option value="Artifact">Artifact</option>
-      <option value="Battle">Battle</option>
     </select>
 
     <label for="sort">Sort by:</label>
@@ -54,20 +69,29 @@
     <button id="filter">Filter</button>
     <button id="reset">Reset Filters</button>
   </div>
-  <!-- DeckList Container for "Add to Deck" -->
-  <div id="deckList"></div>
-  <!-- -->
+
+  <!-- Main Content Container -->
+  <div class="main-content">
+    <!-- Card Browser -->
+    <div id="cards-container">
+      <div id="cards"></div>
+      <div class="pagination">
+        <button id="prevPage" disabled>Previous</button>
+        <span id="pageInfo">Page 1 of 1</span>
+        <button id="nextPage" disabled>Next</button>
+      </div>
+    </div>
+
+    <!-- Deck Builder -->
+    <div id="deckList"></div>
+  </div>
+
   <div id="loading" class="loading-spinner" style="display: none;">
     Loading...
   </div>
-  <div id="cards-container">
-    <div id="cards"></div>
-  </div> 
-  <div class="pagination">
-    <button id="prevPage" disabled>Previous</button>
-    <span id="pageInfo">Page 1 of 1</span>
-    <button id="nextPage" disabled>Next</button>
-  </div>
+
+  <!-- Scripts -->
   <script src="js/script.js"></script>
+  <script src="js/layoutManager.js"></script>
 </body>
 </html>

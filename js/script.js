@@ -1,9 +1,11 @@
+// script.js
+
 const cardsContainer = document.getElementById('cards');
 const searchInput = document.getElementById('search');
 const colorCheckboxes = document.querySelectorAll('input[name="color"]');
+const typeCheckboxes = document.querySelectorAll('input[name="type"]');
 const cmcInput = document.getElementById('cmc');
 const setSelect = document.getElementById('set');
-const typeSelect = document.getElementById('type');
 const sortSelect = document.getElementById('sort');
 const filterButton = document.getElementById('filter');
 const resetButton = document.getElementById('reset');
@@ -11,7 +13,7 @@ const loadingSpinner = document.getElementById('loading');
 const prevPageButton = document.getElementById('prevPage');
 const nextPageButton = document.getElementById('nextPage');
 const pageInfo = document.getElementById('pageInfo');
-const deckModule = initializeDeckBuilder(); // Initialize and store the deck module, json typeshi
+const deckModule = initializeDeckBuilder(); // Initialize and store the deck module
 
 let currentPage = 1;
 const pageSize = 175; // Increased page size
@@ -97,26 +99,26 @@ function displayCards(cards) {
         <p class="set">Latest print: ${card.set_name}</p>
         <p class="rotation-status" style="color: ${rotationStatus.color}; background-color: black; padding: 2px 5px; border-radius: 3px;">${rotationStatus.text}</p>
       </div>
-        <div class="card-footer">
-          <div class="card-buttons">
-            <a href="${card.scryfall_uri}" target="_blank">View on Scryfall</a>
-            <a href="https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}" target="_blank">View on CardMarket</a>
-          </div>
-          <div class="card-prices">
-              <p>Price: ${card.prices.eur ? card.prices.eur+'€' : card.prices.usd ? card.prices.usd+'$' : ''}</p>
-          </div>
+      <div class="card-footer">
+        <div class="card-buttons">
+          <a href="${card.scryfall_uri}" target="_blank">View on Scryfall</a>
+          <a href="https://www.cardmarket.com/en/Magic/Products/Search?searchString=${encodeURIComponent(card.name)}" target="_blank">View on CardMarket</a>
         </div>
-        <button class="add-to-deck" data-card-id="${card.id}">Add to Deck</button>
+        <div class="card-prices">
+          <p>Price: ${card.prices.eur ? card.prices.eur + '€' : card.prices.usd ? card.prices.usd + '$' : ''}</p>
+        </div>
+      </div>
+      <button class="add-to-deck" data-card-id="${card.id}">Add to Deck</button>
     `;
 
-    // Event listener to the "Add to Deck" button.
+    // Event listener to the "Add to Deck" button
     const addButton = cardElement.querySelector('.add-to-deck');
     addButton.addEventListener('click', () => {
       deckModule.addToDeck(card.id, card);
     });
+
     cardsContainer.appendChild(cardElement);
   });
-  
 }
 
 async function fetchCards() {
@@ -139,8 +141,9 @@ async function fetchCards() {
     .map(checkbox => checkbox.value);
   const cmcFilter = cmcInput.value;
   const setFilter = setSelect.value;
-  const selectedTypes = Array.from(typeSelect.selectedOptions)
-    .map(option => option.value);
+  const selectedTypes = Array.from(typeCheckboxes)
+    .filter(checkbox => checkbox.checked)
+    .map(checkbox => checkbox.value);
   const sortOrder = sortSelect.value;
 
   // Base query for standard legal cards
@@ -233,9 +236,9 @@ filterButton.addEventListener('click', () => {
 resetButton.addEventListener('click', () => {
   searchInput.value = '';
   colorCheckboxes.forEach(checkbox => (checkbox.checked = false));
+  typeCheckboxes.forEach(checkbox => (checkbox.checked = false));
   cmcInput.value = 0;
   setSelect.value = '';
-  typeSelect.selectedIndex = -1; // Deselect all types
   sortSelect.value = 'set_number';
   currentPage = 1;
   cardsContainer.innerHTML = '';
@@ -261,72 +264,151 @@ nextPageButton.addEventListener('click', () => {
 fetchCards();
 
 function initializeDeckBuilder() {
-  
   let deck = [];
-  // ========================
-  // 1337 Deck Display
-  // ========================
-  // Create or get a deck display container
-  let deckList = document.getElementById('deckList');
-  if (!deckList) {
-    deckList = document.createElement('div');
-    deckList.id = 'deckList';
-  }
+  let commander = null; // Track the commander
+  const deckList = document.getElementById('deckList');
   deckList.innerHTML = '<h2>Your Deck</h2>';
-  
 
-  // Renderthe deck list
+  // Function to sort cards by type
+  function sortDeckByType() {
+    const typeOrder = ['Commander', 'Creature', 'Instant', 'Sorcery', 'Enchantment', 'Artifact', 'Land', 'Battle'];
+    deck.sort((a, b) => {
+      const typeA = a.type_line.split(' — ')[0]; // Get the primary type (e.g., "Creature")
+      const typeB = b.type_line.split(' — ')[0];
+      return typeOrder.indexOf(typeA) - typeOrder.indexOf(typeB);
+    });
+  }
+
+  // Function to render the deck
   function renderDeck() {
     deckList.innerHTML = '<h2>Your Deck</h2>';
-    const list = document.createElement('ul');
-    deck.forEach(card => {
-      const li = document.createElement('li');
-      li.textContent = card.name;
-      list.appendChild(li);
-      const removeButton = document.createElement('button');
-      removeButton.textContent = 'Remove';
-      removeButton.classList.add('remove-from-deck');
-      removeButton.dataset.cardId = card.id; // Set the card's ID for later use      
+    if (commander) {
+      const commanderSection = document.createElement('div');
+      commanderSection.classList.add('deck-section');
+      commanderSection.innerHTML = `<h3>Commander</h3>`;
+      const commanderCard = createDeckCardElement(commander);
+      commanderSection.appendChild(commanderCard);
+      deckList.appendChild(commanderSection);
+    }
 
-      // Add event listener to the remove button
-      removeButton.addEventListener('click', () => {
-        removeFromDeck(card.id); // Call the function to remove the card
-      });
-      
-      removeButton.style.marginLeft = '10px'; // Add space to avoid sticking to text
-      li.appendChild(removeButton); // Append the button to the list item
-      list.appendChild(li); // Add the list item to the unordered list
+    // Group cards by type
+    const groupedCards = {};
+    deck.forEach(card => {
+      if (card === commander) return; // Skip the commander
+      const type = card.type_line.split(' — ')[0]; // Get the primary type
+      if (!groupedCards[type]) {
+        groupedCards[type] = [];
+      }
+      groupedCards[type].push(card);
     });
 
-    deckList.appendChild(list);
+    // Render each group
+    Object.keys(groupedCards).forEach(type => {
+      const section = document.createElement('div');
+      section.classList.add('deck-section');
+      section.innerHTML = `<h3>${type}s</h3>`;
+      groupedCards[type].forEach(card => {
+        const cardElement = createDeckCardElement(card);
+        section.appendChild(cardElement);
+      });
+      deckList.appendChild(section);
+    });
+
+    // Add export button
+    const exportButton = document.createElement('button');
+    exportButton.textContent = 'Export Deck';
+    exportButton.classList.add('export-button');
+    exportButton.addEventListener('click', exportDeck);
+    deckList.appendChild(exportButton);
   }
 
-  // Add a card to the deck
+  // Function to create a card element for the deck list
+  function createDeckCardElement(card) {
+    const cardElement = document.createElement('div');
+    cardElement.classList.add('deck-card');
+    cardElement.innerHTML = `
+      <p>${card.name} <span class="card-price">${card.prices.eur ? card.prices.eur + '€' : card.prices.usd ? card.prices.usd + '$' : ''}</span></p>
+      <button class="remove-from-deck" data-card-id="${card.id}">Remove</button>
+    `;
+
+    // Show card art on hover
+    const cardImage = document.createElement('img');
+    cardImage.src = card.image_uris ? card.image_uris.normal : 'https://via.placeholder.com/223x310?text=No+Image';
+    cardImage.classList.add('card-art');
+    cardElement.appendChild(cardImage);
+
+    // Add event listener to the remove button
+    const removeButton = cardElement.querySelector('.remove-from-deck');
+    removeButton.addEventListener('click', () => {
+      removeFromDeck(card.id);
+    });
+
+    return cardElement;
+  }
+
+  // Function to add a card to the deck
   function addToDeck(cardId, cardData) {
-    // Check if a card with the same ID already exists in the deck
-    const isDuplicate = deck.some(card => card.id === cardId);
-    if (!isDuplicate) {
-        deck.push(cardData);
-        renderDeck();
-    } 
+    // Check if the card is already in the deck (except for basic lands)
+    const isBasicLand = cardData.type_line.includes('Basic Land');
+    const isDuplicate = deck.some(card => card.id === cardId && !isBasicLand);
+    if (isDuplicate) {
+      alert('You can only add one copy of each card (except basic lands).');
+      return;
+    }
+
+    // Check if the card is a Legendary Creature and set it as the commander
+    if (cardData.type_line.includes('Legendary Creature') && !commander) {
+      commander = cardData;
+    }
+
+    deck.push(cardData);
+    sortDeckByType();
+    renderDeck();
   }
 
+  // Function to remove a card from the deck
   function removeFromDeck(cardId) {
-    // Find the index of the card with the given ID
     const cardIndex = deck.findIndex(card => card.id === cardId);
-    
     if (cardIndex !== -1) {
-        deck.splice(cardIndex, 1); // Remove the card from the deck
-        renderDeck(); // Update the deck display
+      if (deck[cardIndex] === commander) {
+        commander = null; // Remove the commander
+      }
+      deck.splice(cardIndex, 1);
+      sortDeckByType();
+      renderDeck();
     }
-}
+  }
 
-  // Expose the deck functions for use in other parts of the code, basically outside of the initializeDeckBuilder func
+  // Function to export the deck as a text file
+  function exportDeck() {
+    const cardCounts = {};
+    deck.forEach(card => {
+      if (cardCounts[card.name]) {
+        cardCounts[card.name]++;
+      } else {
+        cardCounts[card.name] = 1;
+      }
+    });
+
+    let deckText = '';
+    Object.keys(cardCounts).forEach(cardName => {
+      deckText += `${cardCounts[cardName]} ${cardName}\n`;
+    });
+
+    const blob = new Blob([deckText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'decklist.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Expose the deck functions
   return {
     addToDeck,
     removeFromDeck,
     renderDeck,
-    getDeck: () => deck
+    getDeck: () => deck,
   };
 }
-
