@@ -1,11 +1,10 @@
 const cardsContainer = document.getElementById('cards');
 const searchInput = document.getElementById('search');
-const colorSelect = document.getElementById('color');
+const colorCheckboxes = document.querySelectorAll('input[name="color"]');
 const cmcInput = document.getElementById('cmc');
 const setSelect = document.getElementById('set');
+const typeSelect = document.getElementById('type');
 const sortSelect = document.getElementById('sort');
-const releaseDateInput = document.getElementById('releaseDate');
-const rotationDateInput = document.getElementById('rotationDate');
 const filterButton = document.getElementById('filter');
 const resetButton = document.getElementById('reset');
 const loadingSpinner = document.getElementById('loading');
@@ -121,12 +120,14 @@ async function fetchCards() {
   loadingSpinner.style.display = 'block';
 
   const searchTerm = searchInput.value.trim();
-  const colorFilter = colorSelect.value;
+  const selectedColors = Array.from(colorCheckboxes)
+    .filter(checkbox => checkbox.checked)
+    .map(checkbox => checkbox.value);
   const cmcFilter = cmcInput.value;
   const setFilter = setSelect.value;
+  const selectedTypes = Array.from(typeSelect.selectedOptions)
+    .map(option => option.value);
   const sortOrder = sortSelect.value;
-  const releaseDateFilter = releaseDateInput.value;
-  const rotationDateFilter = rotationDateInput.value;
 
   // Base query for standard legal cards
   let query = 'game:paper legal:standard';
@@ -135,20 +136,17 @@ async function fetchCards() {
   if (searchTerm) {
     query += ` name:${searchTerm}`; // Use name: for partial matches
   }
-  if (colorFilter) {
-    query += ` color=${colorFilter}`;
+  if (selectedColors.length > 0) {
+    query += ` (${selectedColors.map(color => `color=${color}`).join(' OR ')})`;
   }
-  if (cmcFilter && cmcFilter > 0) { // Only apply cmc filter if cmcFilter > 0
+  if (cmcFilter && cmcFilter > 0) {
     query += ` cmc=${cmcFilter}`;
   }
   if (setFilter) {
     query += ` set:${setFilter}`;
   }
-  if (releaseDateFilter) {
-    query += ` released>=${releaseDateFilter}`;
-  }
-  if (rotationDateFilter) {
-    query += ` released<=${rotationDateFilter}`;
+  if (selectedTypes.length > 0) {
+    query += ` (${selectedTypes.map(type => `type:${type}`).join(' OR ')})`;
   }
 
   // Construct the full URL
@@ -220,11 +218,10 @@ filterButton.addEventListener('click', () => {
 
 resetButton.addEventListener('click', () => {
   searchInput.value = '';
-  colorSelect.value = '';
+  colorCheckboxes.forEach(checkbox => (checkbox.checked = false));
   cmcInput.value = 0;
   setSelect.value = '';
-  releaseDateInput.value = '';
-  rotationDateInput.value = '';
+  typeSelect.selectedIndex = -1; // Deselect all types
   sortSelect.value = 'set_number';
   currentPage = 1;
   cardsContainer.innerHTML = '';
