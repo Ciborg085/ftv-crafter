@@ -24,7 +24,7 @@
       <label><input type="checkbox" name="color" value="G"> Green</label>
       <label><input type="checkbox" name="color" value="C"> Colorless</label>
     </div>
-
+    
     <label for="cmc">CMC:</label>
     <input type="number" id="cmc" min="0" max="20" value="0">
 
@@ -54,12 +54,15 @@
     <button id="filter">Filter</button>
     <button id="reset">Reset Filters</button>
   </div>
+  <!-- DeckList Container for "Add to Deck" -->
+  <div id="deckList"></div>
+  <!-- -->
   <div id="loading" class="loading-spinner" style="display: none;">
     Loading...
   </div>
   <div id="cards-container">
     <div id="cards"></div>
-  </div>
+  </div> 
   <div class="pagination">
     <button id="prevPage" disabled>Previous</button>
     <span id="pageInfo">Page 1 of 1</span>
