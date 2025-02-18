@@ -11,6 +11,7 @@ const loadingSpinner = document.getElementById('loading');
 const prevPageButton = document.getElementById('prevPage');
 const nextPageButton = document.getElementById('nextPage');
 const pageInfo = document.getElementById('pageInfo');
+const deckModule = initializeDeckBuilder(); // Initialize and store the deck module, json typeshi
 
 let currentPage = 1;
 const pageSize = 175; // Increased page size
@@ -105,9 +106,17 @@ function displayCards(cards) {
               <p>Price: ${card.prices.eur ? card.prices.eur+'€' : card.prices.usd ? card.prices.usd+'$' : ''}</p>
           </div>
         </div>
+        <button class="add-to-deck" data-card-id="${card.id}">Add to Deck</button>
     `;
+
+    // Event listener to the "Add to Deck" button.
+    const addButton = cardElement.querySelector('.add-to-deck');
+    addButton.addEventListener('click', () => {
+      deckModule.addToDeck(card.id, card);
+    });
     cardsContainer.appendChild(cardElement);
   });
+  
 }
 
 async function fetchCards() {
@@ -250,3 +259,74 @@ nextPageButton.addEventListener('click', () => {
 });
 
 fetchCards();
+
+function initializeDeckBuilder() {
+  
+  let deck = [];
+  // ========================
+  // 1337 Deck Display
+  // ========================
+  // Create or get a deck display container
+  let deckList = document.getElementById('deckList');
+  if (!deckList) {
+    deckList = document.createElement('div');
+    deckList.id = 'deckList';
+  }
+  deckList.innerHTML = '<h2>Your Deck</h2>';
+  
+
+  // Renderthe deck list
+  function renderDeck() {
+    deckList.innerHTML = '<h2>Your Deck</h2>';
+    const list = document.createElement('ul');
+    deck.forEach(card => {
+      const li = document.createElement('li');
+      li.textContent = card.name;
+      list.appendChild(li);
+      const removeButton = document.createElement('button');
+      removeButton.textContent = 'Remove';
+      removeButton.classList.add('remove-from-deck');
+      removeButton.dataset.cardId = card.id; // Set the card's ID for later use      
+
+      // Add event listener to the remove button
+      removeButton.addEventListener('click', () => {
+        removeFromDeck(card.id); // Call the function to remove the card
+      });
+      
+      removeButton.style.marginLeft = '10px'; // Add space to avoid sticking to text
+      li.appendChild(removeButton); // Append the button to the list item
+      list.appendChild(li); // Add the list item to the unordered list
+    });
+
+    deckList.appendChild(list);
+  }
+
+  // Add a card to the deck
+  function addToDeck(cardId, cardData) {
+    // Check if a card with the same ID already exists in the deck
+    const isDuplicate = deck.some(card => card.id === cardId);
+    if (!isDuplicate) {
+        deck.push(cardData);
+        renderDeck();
+    } 
+  }
+
+  function removeFromDeck(cardId) {
+    // Find the index of the card with the given ID
+    const cardIndex = deck.findIndex(card => card.id === cardId);
+    
+    if (cardIndex !== -1) {
+        deck.splice(cardIndex, 1); // Remove the card from the deck
+        renderDeck(); // Update the deck display
+    }
+}
+
+  // Expose the deck functions for use in other parts of the code, basically outside of the initializeDeckBuilder func
+  return {
+    addToDeck,
+    removeFromDeck,
+    renderDeck,
+    getDeck: () => deck
+  };
+}
+
